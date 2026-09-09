@@ -1,0 +1,30 @@
+title: 우아생활 - 푸드트럭·안심택배함 찾기
+description: >-
+  전국 푸드트럭허가구역 477곳, 안심택배함 812곳을 지역별로 검색하세요.
+  우리 동네 생활편의시설 정보를 한눈에 확인할 수 있습니다.
+url: "https://wooalife.wooahouse.com"
+baseurl: ""
+lang: ko
+timezone: Asia/Seoul
+author: WooaHouse
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  hard_wrap: false
+
+plugins:
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - scripts/
+  - "*.py"
+  - "*.log"
+  - "*.txt"
+  - README.md
+  - .gitignore
+  - vendor/
+  - _rawdata/

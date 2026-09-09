@@ -1,0 +1,137 @@
+---
+layout: default
+---
+
+<div class="page-with-sidebar">
+<div class="camp-page">
+
+  <nav class="breadcrumb" aria-label="위치">
+    <a href="/">홈</a>
+    <span>›</span>
+    <a href="/locker-region/{{ page.doShort | uri_escape }}/">{{ page.doShort }}</a>
+    <span>›</span>
+    <span>{{ page.fcltyName }}</span>
+  </nav>
+
+  <div class="gallery" id="gallery">
+    <div class="gallery-placeholder">📦</div>
+  </div>
+
+  <div class="camp-header">
+    <div class="camp-tags">
+      {% if page.boxKind and page.boxKind != "" %}<span class="tag tag-type">{{ page.boxKind }}</span>{% endif %}
+      <span class="tag tag-env">📍 {{ page.doShort }} {{ page.sigungu }}</span>
+    </div>
+    <h1 class="camp-title">{{ page.fcltyName }}</h1>
+    {% if page.addr and page.addr != "" %}
+    <div class="camp-info-row">
+      <span class="camp-info-icon">📍</span>
+      <span>{{ page.addr }}</span>
+    </div>
+    {% endif %}
+    {% if page.customerTel and page.customerTel != "" %}
+    <div class="camp-info-row">
+      <span class="camp-info-icon">📞</span>
+      <a href="tel:{{ page.customerTel }}">{{ page.customerTel }}</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="ad-slot">
+    {% include ad.html %}
+  </div>
+
+  <div class="camp-section">
+    <h2>ℹ️ 이용 정보</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:.92rem;">
+      {% if page.boxCount and page.boxCount != "" and page.boxCount != "0" %}
+      <tr><td style="padding:8px 0;color:#6B7280;width:130px;">칸 개수</td><td>{{ page.boxCount }}칸</td></tr>
+      {% endif %}
+      {% if page.weekdayOpen and page.weekdayOpen != "" %}
+      <tr><td style="padding:8px 0;color:#6B7280;">이용 가능 시간</td><td>{{ page.weekdayOpen }} ~ {{ page.weekdayClose }}</td></tr>
+      {% endif %}
+      {% if page.freeUseTime and page.freeUseTime != "" %}
+      <tr><td style="padding:8px 0;color:#6B7280;">무료 이용시간</td><td>{{ page.freeUseTime }}</td></tr>
+      {% endif %}
+      {% if page.arrs and page.arrs != "" and page.arrs != "0" %}
+      <tr><td style="padding:8px 0;color:#6B7280;">연체료</td><td>{{ page.arrs }}원{% if page.arrsUnitTime and page.arrsUnitTime != "" %} / {{ page.arrsUnitTime }}{% endif %}</td></tr>
+      {% endif %}
+      {% if page.institution and page.institution != "" %}
+      <tr><td style="padding:8px 0;color:#6B7280;">관리기관</td><td>{{ page.institution }}</td></tr>
+      {% endif %}
+      {% if page.refDate and page.refDate != "" %}
+      <tr><td style="padding:8px 0;color:#6B7280;">데이터 기준일</td><td>{{ page.refDate }}</td></tr>
+      {% endif %}
+    </table>
+    <p style="font-size:.82rem;color:#92400E;margin-top:14px;">
+      지방자치단체 공공데이터 기준으로, 실제 이용 가능 여부는 다를 수 있습니다. 방문 전 확인하세요.
+    </p>
+  </div>
+
+  <div class="camp-section">
+    <h2>🗺️ 위치</h2>
+    <div id="map" style="width:100%;height:280px;border-radius:10px;background:#F3F4F6;display:flex;align-items:center;justify-content:center;color:#9CA3AF;">지도를 불러오는 중...</div>
+    <a href="https://map.kakao.com/?q={{ page.addr | uri_escape }}" class="reserve-btn secondary" style="margin-top:12px;display:block;">🗺️ 카카오맵에서 크게 보기</a>
+  </div>
+
+  <div class="ad-slot">
+    {% include ad.html %}
+  </div>
+
+  <div class="region-camps">
+    <h2>📍 {{ page.doShort }} 다른 안심택배함</h2>
+    <div id="regionGrid" class="camp-grid"></div>
+    <p style="margin-top:16px;">
+      <a href="/locker-region/{{ page.doShort | uri_escape }}/">{{ page.doShort }} 안심택배함 전체 보기 →</a>
+    </p>
+  </div>
+
+</div>
+<aside class="tool-sidebar"></aside>
+</div>
+
+<script>
+(async () => {
+  const currentSlug = {{ page.slug | jsonify }};
+  const currentRegion = {{ page.doShort | jsonify }};
+  const currentSigungu = {{ page.sigungu | jsonify }};
+  const lat = {{ page.lat | jsonify }};
+  const lng = {{ page.lng | jsonify }};
+
+  const mapEl = document.getElementById('map');
+  if (mapEl && lat && lng) {
+    const script = document.createElement('script');
+    script.src = 'https://dapi.kakao.com/v2/maps/sdk.js?appkey=78e249ab403b2955e4ca71e71f658549';
+    script.onload = () => {
+      const center = new kakao.maps.LatLng(lat, lng);
+      const map = new kakao.maps.Map(mapEl, { center, level: 4 });
+      new kakao.maps.Marker({ map, position: center });
+    };
+    document.head.appendChild(script);
+  } else if (mapEl) {
+    mapEl.innerHTML = '<p style="padding:20px;text-align:center;color:#9CA3AF;">좌표 정보가 없어 지도를 표시할 수 없습니다. 아래 버튼으로 확인하세요.</p>';
+  }
+
+  try {
+    const resp = await fetch('/locker_search_index.json');
+    const all = await resp.json();
+    const region = all
+      .filter(f => f.doShort === currentRegion && f.slug !== currentSlug)
+      .sort((a,b) => (a.sigungu === currentSigungu ? -1 : 1))
+      .slice(0, 6);
+    if (region.length > 0) {
+      document.getElementById('regionGrid').innerHTML = region.map(itemCard).join('');
+    }
+  } catch(e) {}
+
+  function itemCard(f) {
+    return `<a class="camp-card" href="/locker/${f.slug}/">
+      <div class="camp-card-img-placeholder">📦</div>
+      <div class="camp-card-body">
+        <div class="camp-card-name">${f.n}</div>
+        <div class="camp-card-loc">📍 ${f.sigungu || f.doShort || ''}</div>
+      </div>
+    </a>`;
+  }
+})();
+</script>
